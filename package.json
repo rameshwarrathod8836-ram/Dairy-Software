@@ -1,0 +1,13 @@
+{
+  "name": "dairy-software",
+  "version": "1.0.0",
+  "description": "Jagdamb Dairy Management System",
+  "scripts": {
+    "server": "cd backend && node server.js",
+    "client": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
