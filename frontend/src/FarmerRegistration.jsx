@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://dairy-software-vhh4.onrender.com/api";
 
 export default function FarmerRegistration({ dairyId = 1 }) {
   const currentDairyId = Number(dairyId) || 1;

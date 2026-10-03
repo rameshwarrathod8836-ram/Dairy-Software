@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://dairy-software-vhh4.onrender.com/api";
 
 export default function AdvanceManager({ dairyId = 1 }) {
   const [farmers, setFarmers] = useState([]);

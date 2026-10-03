@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+const API_BASE = "https://dairy-software-vhh4.onrender.com/api";
 
 export default function AdminPanel({ onLogout }) {
   const [dairies, setDairies] = useState([]);
@@ -15,7 +16,7 @@ export default function AdminPanel({ onLogout }) {
   const [msg, setMsg] = useState("");
 
   const loadDairies = () => {
-    fetch("http://localhost:5000/api/admin/dairies")
+   fetch(`${API_BASE}/admin/dairies`)
       .then((res) => res.json())
       .then((data) => setDairies(data || []))
       .catch((err) => console.error(err));
@@ -29,7 +30,7 @@ export default function AdminPanel({ onLogout }) {
     e.preventDefault();
     setMsg("तयार करत आहे...");
     try {
-      const res = await fetch("http://localhost:5000/api/admin/create-dairy", {
+      const res = await fetch(`${API_BASE}/admin/create-dairy`,  {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -61,7 +62,7 @@ export default function AdminPanel({ onLogout }) {
     if (!window.confirm(`तुम्हाला नक्की ही डेअरी ${action} करायची आहे का?`)) return;
 
     try {
-      await fetch("http://localhost:5000/api/admin/toggle-status", {
+      await fetch(`${API_BASE}/admin/toggle-status`,  {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dairy_id, is_active: currentStatus ? 0 : 1 }),

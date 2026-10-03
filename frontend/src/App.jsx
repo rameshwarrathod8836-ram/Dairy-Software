@@ -29,9 +29,8 @@ export default function App() {
   const handleDownloadBackup = async () => {
     setBackingUp(true);
     try {
-      const dairyId = user?.dairy_id || 1;
       const response = await fetch(
-        `http://localhost:5000/api/backup?dairy_id=${dairyId}`
+        `http://localhost:5000/api/backup?dairy_id=${dairyId}`,
       );
       if (!response.ok) throw new Error("Backup download fail zala!");
 
@@ -92,13 +91,21 @@ export default function App() {
               {user.dairy_name || "जगदंब दूध संकलन केंद्र"}
             </div>
             <div style={brandSub}>
-              लॉगिन: <span style={{ color: "#38bdf8", fontWeight: "700" }}>{user.username}</span> (डेअरी चालक)
+              लॉगिन:{" "}
+              <span style={{ color: "#38bdf8", fontWeight: "700" }}>
+                {user.username}
+              </span>{" "}
+              (डेअरी चालक)
             </div>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <button onClick={handleDownloadBackup} disabled={backingUp} style={btnBackupModern}>
+          <button
+            onClick={handleDownloadBackup}
+            disabled={backingUp}
+            style={btnBackupModern}
+          >
             <span>📊</span>
             <span>{backingUp ? "बॅकअप..." : "Excel बॅकअप"}</span>
           </button>
@@ -129,7 +136,9 @@ export default function App() {
                   background: isActive ? "#ffffff" : "transparent",
                   color: isActive ? "#1d4ed8" : "#64748b",
                   fontWeight: isActive ? "800" : "600",
-                  boxShadow: isActive ? "0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04)" : "none",
+                  boxShadow: isActive
+                    ? "0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04)"
+                    : "none",
                 }}
               >
                 <span style={{ fontSize: "15px" }}>{tab.icon}</span>
@@ -154,9 +163,7 @@ export default function App() {
         {activeTab === "advance" && (
           <AdvanceManager dairyId={user.dairy_id || 1} />
         )}
-        {activeTab === "rates" && (
-          <RateSettings dairyId={user.dairy_id || 1} />
-        )}
+        {activeTab === "rates" && <RateSettings dairyId={user.dairy_id || 1} />}
       </main>
     </div>
   );
