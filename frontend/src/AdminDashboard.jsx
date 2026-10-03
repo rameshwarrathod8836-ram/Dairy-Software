@@ -14,7 +14,11 @@ export default function AdminDashboard({ onLogout }) {
   const [loading, setLoading] = useState(false);
   const [editingDairy, setEditingDairy] = useState(null);
 
-  // नवीन डेअरी फॉर्म स्टेट
+  // Password reset state (Super Admin aani Dairy Users doghan sathi)
+  const [resetModalUser, setResetModalUser] = useState(null);
+  const [newPassInput, setNewPassInput] = useState("");
+
+  // Navin dairy form state
   const [form, setForm] = useState({
     dairy_code: "",
     dairy_name: "",
@@ -50,7 +54,7 @@ export default function AdminDashboard({ onLogout }) {
     loadData();
   }, []);
 
-  // १. नवीन डेअरी नोंदवणे
+  // १. Navin dairy nondavne
   const handleCreateDairy = async (e) => {
     e.preventDefault();
     try {
@@ -61,7 +65,7 @@ export default function AdminDashboard({ onLogout }) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert("✅ नवीन डेअरी आणि लॉगिन यशस्वीरीत्या तयार झाले!");
+        alert("✅ Navin dairy aani login yashasviritya tayar jhale!");
         setForm({
           dairy_code: "",
           dairy_name: "",
@@ -73,14 +77,14 @@ export default function AdminDashboard({ onLogout }) {
         });
         loadData();
       } else {
-        alert(data.error || "डेअरी नोंदवताना त्रुटी आली!");
+        alert(data.error || "Dairy nondavtana truti aali!");
       }
     } catch (err) {
-      alert("सर्व्हर एरर आला!");
+      alert("Server error aala!");
     }
   };
 
-  // २. डेअरी माहिती दुरुस्त करणे
+  // २. Dairy mahiti durust karne
   const handleUpdateDairy = async (e) => {
     e.preventDefault();
     try {
@@ -91,24 +95,24 @@ export default function AdminDashboard({ onLogout }) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert("✅ डेअरी प्रोफाईल माहिती अपडेट झाली!");
+        alert("✅ Dairy profile mahiti update jhali!");
         setEditingDairy(null);
         loadData();
       } else {
-        alert(data.error || "अपडेट करताना त्रुटी आली!");
+        alert(data.error || "Update kartana truti aali!");
       }
     } catch (err) {
-      alert("सर्व्हर एरर आला!");
+      alert("Server error aala!");
     }
   };
 
-  // ३. ब्लॉक / ॲक्टिव्ह टॉगल करणे
+  // ३. Block / Active toggle karne
   const handleToggleStatus = async (dairyId, currentStatus) => {
     const nextStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
     const msg =
       nextStatus === "BLOCKED"
-        ? "खात्री आहे का? या डेअरीचे लॉगिन तात्काळ बंद (Block) होईल!"
-        : "या डेअरीचे खाते पुन्हा सुरू करायचे आहे का?";
+        ? "Khatri ahe ka? Ya dairy che login tatkal band (Block) hoil!"
+        : "Ya dairy che khate punha suru karayche ahe ka?";
 
     if (!window.confirm(msg)) return;
 
@@ -121,16 +125,44 @@ export default function AdminDashboard({ onLogout }) {
       if (res.ok) {
         loadData();
       } else {
-        alert("स्टेटस बदलताना त्रुटी आली!");
+        alert("Status badaltana truti aali!");
       }
     } catch (err) {
-      alert("सर्व्हर एरर आला!");
+      alert("Server error aala!");
+    }
+  };
+
+  // ४. Password reset / update karne
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!newPassInput) return alert("Krupaya navin password taka!");
+
+    try {
+      const res = await fetch(`${API_BASE}/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: resetModalUser,
+          newPassword: newPassInput,
+          isSuperAdmin: true,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ User [${resetModalUser}] cha password yashasviritya badalla!`);
+        setResetModalUser(null);
+        setNewPassInput("");
+      } else {
+        alert(data.error || "Truti aali!");
+      }
+    } catch (err) {
+      alert("Server error aala!");
     }
   };
 
   return (
     <div style={{ minHeight: "100vh", background: "#0b1329", color: "#f8fafc", fontFamily: "system-ui, sans-serif" }}>
-      {/* १. टॉप हेडर */}
+      {/* १. Top Header */}
       <header style={{ background: "#111c44", padding: "16px 28px", borderBottom: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span style={{ fontSize: "24px" }}>🛡️</span>
@@ -139,12 +171,23 @@ export default function AdminDashboard({ onLogout }) {
             <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>SaaS डेअरी मॅनेजमेंट मास्टर सिस्टीम</p>
           </div>
         </div>
-        <button
-          onClick={onLogout}
-          style={{ padding: "8px 16px", background: "#ef4444", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}
-        >
-          🚪 बाहेर पडा (Logout)
-        </button>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button
+            onClick={() => {
+              setResetModalUser("admin");
+              setNewPassInput("");
+            }}
+            style={{ padding: "8px 14px", background: "#f59e0b", color: "#000", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}
+          >
+            🔑 Admin Password
+          </button>
+          <button
+            onClick={onLogout}
+            style={{ padding: "8px 16px", background: "#ef4444", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}
+          >
+            🚪 बाहेर पडा (Logout)
+          </button>
+        </div>
       </header>
 
       <main style={{ maxWidth: "1200px", margin: "24px auto", padding: "0 16px" }}>
@@ -179,7 +222,7 @@ export default function AdminDashboard({ onLogout }) {
           </div>
         </div>
 
-        {/* ३. नवीन डेअरी नोंदणी फॉर्म */}
+        {/* ३. Navin Dairy Nondani Form */}
         <div style={{ background: "#111c44", padding: "22px", borderRadius: "12px", border: "1px solid #1e293b", marginBottom: "26px" }}>
           <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "#f1f5f9" }}>➕ नवीन डेअरी जोडा व खाते तयार करा</h3>
           <form onSubmit={handleCreateDairy} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px" }}>
@@ -246,7 +289,7 @@ export default function AdminDashboard({ onLogout }) {
           </form>
         </div>
 
-        {/* ४. नोंदणीकृत डेअरींची यादी */}
+        {/* ४. Nondanikut Dairy Yadi */}
         <div style={{ background: "#111c44", padding: "22px", borderRadius: "12px", border: "1px solid #1e293b" }}>
           <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "#f1f5f9" }}>
             🏢 नोंदणीकृत डेअरी यादी ({dairies.length})
@@ -291,6 +334,16 @@ export default function AdminDashboard({ onLogout }) {
                     </td>
                     <td style={{ ...tdStyle, textAlign: "center", whiteSpace: "nowrap" }}>
                       <button
+                        onClick={() => {
+                          setResetModalUser(d.username);
+                          setNewPassInput("");
+                        }}
+                        style={{ padding: "5px 10px", marginRight: "6px", background: "#f59e0b", color: "#000", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "700" }}
+                        title="पासवर्ड बदला"
+                      >
+                        🔑 पासवर्ड
+                      </button>
+                      <button
                         onClick={() => setEditingDairy(d)}
                         style={{ padding: "5px 10px", marginRight: "6px", background: "#334155", color: "#f8fafc", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px" }}
                       >
@@ -319,7 +372,7 @@ export default function AdminDashboard({ onLogout }) {
           </div>
         </div>
 
-        {/* ५. माहिती दुरुस्ती मोडल (Edit Modal) */}
+        {/* ५. Mahiti Durusti Modal (Edit Modal) */}
         {editingDairy && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
             <div style={{ background: "#111c44", padding: "24px", borderRadius: "12px", width: "420px", border: "1px solid #334155" }}>
@@ -377,6 +430,50 @@ export default function AdminDashboard({ onLogout }) {
                     style={{ padding: "8px 16px", background: "#0284c7", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "700" }}
                   >
                     💾 सेव्ह करा
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ६. Password Reset Modal (Popup) */}
+        {resetModalUser && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+            <div style={{ background: "#111c44", padding: "24px", borderRadius: "12px", width: "380px", border: "1px solid #334155" }}>
+              <h3 style={{ margin: "0 0 12px 0", color: "#38bdf8", fontSize: "16px" }}>
+                🔑 पासवर्ड बदला ({resetModalUser})
+              </h3>
+              <form onSubmit={handleResetPassword}>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ fontSize: "12px", color: "#94a3b8", display: "block", marginBottom: "6px" }}>
+                    नवीन पासवर्ड टाका:
+                  </label>
+                  <input
+                    type="text"
+                    value={newPassInput}
+                    onChange={(e) => setNewPassInput(e.target.value)}
+                    placeholder="उदा. Jagdamb@2026 किंवा Admin@2026"
+                    style={darkInput}
+                    required
+                  />
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetModalUser(null);
+                      setNewPassInput("");
+                    }}
+                    style={{ padding: "8px 14px", background: "#334155", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}
+                  >
+                    रद्द करा
+                  </button>
+                  <button
+                    type="submit"
+                    style={{ padding: "8px 16px", background: "#16a34a", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "700" }}
+                  >
+                    💾 पासवर्ड सेव्ह करा
                   </button>
                 </div>
               </form>
