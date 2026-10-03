@@ -643,7 +643,7 @@ app.get("/api/backup", async (req, res) => {
 // ==========================================
 // ८. सर्व्हर स्टार्ट (शेवटी)
 // ==========================================
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend Server running on http://localhost:${PORT}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Backend Server running on port ${PORT}`);
 });
