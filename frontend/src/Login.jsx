@@ -3,8 +3,8 @@ import React, { useState } from "react";
 const API_BASE = "https://dairy-software-vhh4.onrender.com/api";
 
 export default function Login({ onLogin, onLoginSuccess }) {
-  const [username, setUsername] = useState("jagdamb");
-  const [password, setPassword] = useState("123456");
+ const [username, setUsername] = useState("");
+ const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

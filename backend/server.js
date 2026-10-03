@@ -647,3 +647,44 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Backend Server running on port ${PORT}`);
 });
+// पासवर्ड बदलणे व रीसेट करणे (सुरक्षित व लवचिक API)
+app.post("/api/change-password", async (req, res) => {
+  const { username, newPassword, oldPassword, isSuperAdmin } = req.body;
+
+  if (!username || !newPassword) {
+    return res.status(400).json({ error: "युझरनेम आणि नवीन पासवर्ड आवश्यक आहेत!" });
+  }
+
+  try {
+    // १. जर सुपर ॲडमिन नसेल, तर जुना पासवर्ड तपासणे अनिवार्य
+    if (!isSuperAdmin) {
+      if (!oldPassword) {
+        return res.status(400).json({ error: "कृपया जुना पासवर्ड टाका!" });
+      }
+
+      const [check] = await pool.query(
+        "SELECT id FROM users WHERE username = ? AND password = ?",
+        [username, oldPassword]
+      );
+
+      if (check.length === 0) {
+        return res.status(400).json({ error: "जुना पासवर्ड चुकीचा आहे!" });
+      }
+    }
+
+    // २. नवीन पासवर्ड अपडेट करणे
+    const [result] = await pool.query(
+      "UPDATE users SET password = ? WHERE username = ?",
+      [newPassword, username]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "युझर सापडला नाही!" });
+    }
+
+    res.json({ message: "पासवर्ड यशस्वीरीत्या अपडेट झाला!" });
+  } catch (err) {
+    console.error("Password update error:", err);
+    res.status(500).json({ error: "सर्व्हर एरर आला!" });
+  }
+});
