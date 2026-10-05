@@ -156,20 +156,23 @@ export default function BillingReport({ dairyId = 1, dairyInfo }) {
 
   const avgRate = totalQty > 0 ? (grossAmount / totalQty).toFixed(2) : "0.00";
 
+  // ✅ दुरुस्त केलेले WhatsApp बिल फंक्शन (Popup Blocker Fix + 91 Phone Formatting)
   const sendWhatsAppBilling = () => {
     if (reportData.length === 0) return;
 
     let phone = farmerPhone;
-    if (!phone || phone.trim().length < 10) {
+    if (!phone || String(phone).trim().length < 10) {
       phone = prompt("शेतकऱ्याचा १० अंकी मोबाईल नंबर टाका:", "");
-      if (!phone || phone.trim().length < 10) {
+      if (!phone || String(phone).trim().length < 10) {
         alert("मोबाईल नंबर आवश्यक आहे!");
         return;
       }
     }
 
-    let cleanPhone = phone.replace(/[^0-9]/g, "");
-    if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+    let cleanPhone = String(phone).replace(/[^0-9]/g, "");
+    if (cleanPhone.length === 10) {
+      cleanPhone = "91" + cleanPhone;
+    }
 
     const dairyTitle = dairyInfo?.dairy_name || "जगदंब दूध संकलन केंद्र";
     const farmerTitle = reportData[0]?.farmer_name || "";
@@ -197,8 +200,16 @@ export default function BillingReport({ dairyId = 1, dairyInfo }) {
       `--------------------------------\n` +
       `धन्यवाद! 🙏`;
 
-    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, "_blank");
+    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
+
+    // Chrome Popup Blocker बायपास करण्यासाठी Dynamic Link Click
+    const tempLink = document.createElement("a");
+    tempLink.href = waUrl;
+    tempLink.target = "_blank";
+    tempLink.rel = "noopener noreferrer";
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
   };
 
   const exportToCSV = () => {
@@ -417,7 +428,7 @@ export default function BillingReport({ dairyId = 1, dairyInfo }) {
             </div>
           </div>
 
-          {/* ३. मुख्य डेटा टेबल (प्रकार आणि वेळेसह) */}
+          {/* ३. मुख्य डेटा टेबल */}
           <table
             style={{
               width: "100%",
