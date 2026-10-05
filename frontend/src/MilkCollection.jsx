@@ -129,7 +129,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
       const dataM = (await resM.json()) || [];
       const dataE = (await resE.json()) || [];
 
-      // दोन्ही शिफ्टचा डेटा एकत्र
       const combined = [...dataM, ...dataE];
       setAllDayEntries(combined);
     } catch (err) {
@@ -202,7 +201,7 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
           ...payload,
           id: savedData.id || "नवीन",
           phone: farmerPhone,
-          time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }),
+          time: new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true }),
         };
         setLastReceipt(receiptData);
         fetchAllDayData();
@@ -225,22 +224,24 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
     }
   };
 
-  // WhatsApp पावती
+  // ✅ WhatsApp पावती (Popup Blocker Fix + 91 Formatting)
   const sendWhatsAppReceipt = (receipt) => {
     const data = receipt || lastReceipt;
     if (!data) return;
 
     let phone = data.phone || farmerPhone;
-    if (!phone || phone.trim().length < 10) {
+    if (!phone || String(phone).trim().length < 10) {
       phone = prompt("शेतकऱ्याचा १० अंकी मोबाईल नंबर टाका:", "");
-      if (!phone || phone.trim().length < 10) {
+      if (!phone || String(phone).trim().length < 10) {
         alert("मोबाईल नंबर योग्य नाही!");
         return;
       }
     }
 
-    let cleanPhone = phone.replace(/[^0-9]/g, "");
-    if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+    let cleanPhone = String(phone).replace(/[^0-9]/g, "");
+    if (cleanPhone.length === 10) {
+      cleanPhone = "91" + cleanPhone;
+    }
 
     const dairyTitle = dairyInfo?.dairy_name || "जगदंब दूध संकलन केंद्र";
     const shiftText = data.shift === "MORNING" ? "सकाळ" : "संध्याकाळ";
@@ -260,11 +261,19 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
       `--------------------------------\n` +
       `धन्यवाद! 🙏`;
 
-    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, "_blank");
+    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`;
+
+    // Chrome Popup Blocker बायपास करण्यासाठी Dynamic Link Click
+    const tempLink = document.createElement("a");
+    tempLink.href = waUrl;
+    tempLink.target = "_blank";
+    tempLink.rel = "noopener noreferrer";
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
   };
 
-  // 👉 प्रिंट करताना वेळ आणि तारीख अचूक सेट करणे
+  // प्रिंट करताना वेळ आणि तारीख अचूक सेट करणे
   const handlePrintEntry = (entry) => {
     const formattedEntry = {
       ...entry,
@@ -274,7 +283,7 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
       time:
         entry.entry_time ||
         entry.time ||
-        new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }),
+        new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true }),
     };
     setLastReceipt(formattedEntry);
     setTimeout(() => {
@@ -282,9 +291,8 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
     }, 150);
   };
 
-  // ================= 📊 आजच्या संपूर्ण दिवसाची आकडेमोड (सकाळ + संध्याकाळ) =================
+  // ================= 📊 दैनिक आकडेमोड =================
   const totalDayLiters = allDayEntries.reduce((acc, r) => acc + parseFloat(r.quantity || 0), 0);
-  
   const morningEntries = allDayEntries.filter((r) => r.shift === "MORNING");
   const eveningEntries = allDayEntries.filter((r) => r.shift === "EVENING");
 
@@ -304,13 +312,12 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
     ? (allDayEntries.reduce((acc, r) => acc + parseFloat(r.fat || 0) * parseFloat(r.quantity || 0), 0) / totalDayLiters).toFixed(2)
     : "0.0";
 
-  // सध्या निवडलेल्या शिफ्टच्या नोंदी (टेबलसाठी फिल्टर)
   const selectedShiftEntries = allDayEntries.filter((r) => r.shift === shift);
 
   return (
     <div style={{ maxWidth: "1150px", margin: "0 auto", fontFamily: "system-ui, -apple-system, sans-serif" }}>
       
-      {/* थर्मल पावती स्टाइल (८० मिमी थर्मल पेपरसाठी ऑप्टिमाइझ) */}
+      {/* थर्मल पावती स्टाइल */}
       <style>{`
         @media screen {
           .thermal-receipt-container {
@@ -404,10 +411,8 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
         </div>
       )}
 
-      {/* 📊 १. दैनिक सारांश डॅशबोर्ड (आजचे एकूण दूध + सकाळ व संध्याकाळ दोन्ही ब्रेकअप) */}
+      {/* १. दैनिक सारांश डॅशबोर्ड */}
       <div className="no-print" style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr 1fr 1fr", gap: "16px", marginBottom: "22px" }}>
-        
-        {/* कार्ड १: आजचे एकूण दूध (सकाळ + संध्याकाळ मिळून) */}
         <div style={{ ...kpiCard, borderTop: "4px solid #2563eb" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
@@ -429,7 +434,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
           </div>
         </div>
 
-        {/* कार्ड २: सरासरी फॅट */}
         <div style={{ ...kpiCard, borderTop: "4px solid #0891b2" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
@@ -443,7 +447,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
           </div>
         </div>
 
-        {/* कार्ड ३: आजची एकूण रक्कम */}
         <div style={{ ...kpiCard, borderTop: "4px solid #16a34a" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
@@ -457,7 +460,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
           </div>
         </div>
 
-        {/* कार्ड ४: एकूण शेतकरी */}
         <div style={{ ...kpiCard, borderTop: "4px solid #f59e0b" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
@@ -489,7 +491,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
         </div>
         
         <form onSubmit={handleSubmit}>
-          {/* पंक्ती १: तारीख, शिफ्ट, शेतकरी कोड, शेतकऱ्याचे नाव */}
           <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1.1fr 1.4fr", gap: "14px", marginBottom: "16px" }}>
             <div>
               <label style={uiLabel}>तारीख</label>
@@ -529,7 +530,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
             </div>
           </div>
 
-          {/* पंक्ती २: प्रकार, लिटर, FAT, SNF, दर, रक्कम */}
           <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1fr 1fr 1.1fr 1.3fr", gap: "14px", marginBottom: "20px", alignItems: "flex-end" }}>
             <div>
               <label style={uiLabel}>प्रकार</label>
@@ -579,7 +579,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
               />
             </div>
             
-            {/* दर (Rate) */}
             <div>
               <label style={uiLabel}>दर (₹/L)</label>
               <div style={rateBadge}>
@@ -587,7 +586,6 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
               </div>
             </div>
 
-            {/* रक्कम (Amount) */}
             <div>
               <label style={uiLabel}>एकूण रक्कम (₹)</label>
               <div style={amountBadge}>
@@ -620,7 +618,7 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
               <button onClick={() => sendWhatsAppReceipt(lastReceipt)} style={btnWhatsAppModern}>
                 <span>📲</span> WhatsApp पावती पाठवा
               </button>
-              <button onClick={() => window.print()} style={btnPrintModern}>
+              <button onClick={() => handlePrintEntry(lastReceipt)} style={btnPrintModern}>
                 <span>🖨️</span> पावती प्रिंट
               </button>
             </div>
@@ -628,7 +626,7 @@ export default function MilkCollection({ dairyId = 1, dairyInfo }) {
         </div>
       )}
 
-      {/* ४. आजच्या नोंदी टेबल (निवडलेल्या शिफ्टनुसार फिल्टर) */}
+      {/* ४. आजच्या नोंदी टेबल */}
       <div className="no-print" style={tableCard}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
           <div>
